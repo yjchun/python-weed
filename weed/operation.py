@@ -54,7 +54,7 @@ class WeedOperation(object):
 
     def __init__(self, master_host='127.0.0.1', master_port=9333, prefetch_volumeIds=False):
         self.master = WeedMaster(master_host, master_port, prefetch_volumeIds=prefetch_volumeIds)
-
+        self.sess = self.master.sess
 
     def get_volume_fid_full_url(self, fid):
         ''' return a random fid_full_url of volume by @fid
@@ -181,7 +181,7 @@ class WeedOperation(object):
 
     def get_http_response(self, fid_full_url):
         ''' return a "requests.Response" if we want whole info of the http request '''
-        return requests.get(fid_full_url)
+        return self.sess.get(fid_full_url)
 
 
     def get_content(self, fid, fname=''):
@@ -253,7 +253,7 @@ class WeedOperation(object):
             fid_full_url = self.get_fid_full_url(fid)
             LOGGER.debug('Deleting file: fid: %s, fname: %s, fid_full_url: %s' % (fid, fname, fid_full_url))
 
-            r = requests.delete(fid_full_url)
+            r = self.sess.delete(fid_full_url)
             rsp_json = r.json()
 
             wor.status = 'success'
@@ -292,7 +292,7 @@ class WeedOperation(object):
             return False
         fid_full_url = self.get_fid_full_url(fid)
         try:
-            rsp = requests.head(fid_full_url, allow_redirects=True)
+            rsp = self.sess.head(fid_full_url, allow_redirects=True)
             if not rsp.ok:
                 return False
             else:

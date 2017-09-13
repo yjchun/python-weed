@@ -162,7 +162,7 @@ def put_file(fp, fid_full_url, fname='', http_headers=None):
     # LOGGER.debug(rsp.request.headers)
     rsp_json = rsp.json()
     wor = WeedOperationResponse()
-    wor.status == 'success'
+    wor.status = 'success'
     wor.url = fid_full_url
     wor.fname = fname
     wor.storage_size = rsp.json().get('size', 0)

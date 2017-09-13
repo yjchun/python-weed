@@ -46,6 +46,7 @@ import time
 import json
 import urlparse
 import requests
+import requests.adapters
 from conf import *
 from util import *
 
@@ -78,6 +79,11 @@ class WeedMaster(object):
         # volumes usually do not move, so we cache it here for 1 minute.
         self.volumes_cache = {}
 
+        # setup cache
+        self.sess = requests.Session()
+        adapter = requests.adapters.HTTPAdapter(pool_connections=10, pool_maxsize=10, pool_block=False)
+        self.sess.mount('http://', adapter)
+
         if prefetch_volumeIds:
             LOGGER.info("prefetching volumeIds(['1' : '10'] into cache")
             for i in range(10):
@@ -96,7 +102,7 @@ class WeedMaster(object):
         - `self`:
         """
         try:
-            r = requests.get(self.url_assign)
+            r = self.sess.get(self.url_assign)
             result = json.loads(r.content)
         except Exception as e:
             LOGGER.error('Could not get status of this volume: %s. Exception is: %s'
@@ -133,7 +139,7 @@ class WeedMaster(object):
         wak = WeedAssignKeyExtended()
         try:
             LOGGER.debug('Getting new dst_volume_url with master-assign-key-url: %s' % assign_key_url)
-            r = requests.get(assign_key_url)
+            r = self.sess.get(assign_key_url)
             key_dict = json.loads(r.content)
             # print(key_dict)
             wak.update(key_dict)
@@ -181,7 +187,7 @@ class WeedMaster(object):
                 LOGGER.debug('volume_cache(lookup by volume_id) hits')
                 return self.volumes_cache[_volume_id][0]
             else:
-                r = requests.get(self.url_lookup + '?volumeId=%s' % _volume_id)
+                r = self.sess.get(self.url_lookup + '?volumeId=%s' % _volume_id)
                 if not r.ok:    # not HTTP-200, like HTTP-404, ...
                     return None
                 result = json.loads(r.content)
@@ -285,7 +291,7 @@ class WeedMaster(object):
         - `self`:
         """
         try:
-            r = requests.get(self.url_vacuum)
+            r = self.sess.get(self.url_vacuum)
             result = json.loads(r.content)
         except Exception as e:
             LOGGER.error("Could not get status of this volume: %s. "
@@ -301,7 +307,7 @@ class WeedMaster(object):
         - `self`:
         """
         try:
-            r = requests.get(self.url_status)
+            r = self.sess.get(self.url_status)
             result = json.loads(r.content)
         except Exception as e:
             LOGGER.error('Could not get status of this volume: %s. Exception is: %s' % (self.url_status, e))
